@@ -176,6 +176,7 @@ public class CodeGenerateUtils {
         checkFilePath(mapperFile);
         Map<String, Object> dataMap = new HashMap<>();
         generateFileByTemplate(templateName, serviceImplPath, mapperFile, dataMap);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "ServiceImpl.java 完成 >>>>>>>>>>>");
     }
 
     private void generateServiceInterfaceFile(ResultSet resultSet) throws Exception {
@@ -243,6 +244,7 @@ public class CodeGenerateUtils {
         dataMap.put("api_package_name", getSuffixPackageName(servicePath));
         dataMap.put("service_package_name", getSuffixPackageName(serviceImplPath));
         dataMap.put("converter_package_name", getSuffixPackageName(converterPath));
+        dataMap.put("dao_package_name", getSuffixPackageName(daoPath));
         dataMap.put("table_annotation", tableAnnotation);
         Writer out = new BufferedWriter(new OutputStreamWriter(fos, StandardCharsets.UTF_8), 10240);
         template.process(dataMap, out);
