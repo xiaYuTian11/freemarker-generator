@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * https://www.jianshu.com/p/31e532392a74
+ * 代码生成器
  *
  * @author TMW
  * @date 2021/2/25 17:45

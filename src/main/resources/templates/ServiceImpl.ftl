@@ -22,7 +22,6 @@ import java.util.Objects;
 * @date ${date}
 */
 @Service
-@org.apache.dubbo.config.annotation.Service
 public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, ${table_name}> implements ${table_name}Service {
 
     @Resource

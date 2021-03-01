@@ -6,7 +6,6 @@ import ${api_package_name}.${table_name}Service;
 import ${dto_package_name}.${table_name}DTO;
 import ${dto_package_name}.${table_name}ListDTO;
 import ${vo_package_name}.${table_name}VO;
-import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,6 @@ import java.util.Objects;
 public class ${table_name}Controller {
 
     @Autowired
-    @Reference
     private ${table_name}Service ${lower_table_name}Service;
 
     /**
