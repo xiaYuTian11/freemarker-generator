@@ -24,6 +24,19 @@ public class ColumnClass {
      * 数据库字段注释
      **/
     private String columnComment;
+    /***
+     * 数据库主键
+     */
+    private boolean primaryKey;
+
+    public boolean isPrimaryKey() {
+        return primaryKey;
+    }
+
+    public ColumnClass setPrimaryKey(boolean primaryKey) {
+        this.primaryKey = primaryKey;
+        return this;
+    }
 
     public String getColumnComment() {
         return columnComment;

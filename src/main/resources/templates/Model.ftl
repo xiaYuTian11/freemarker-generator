@@ -16,24 +16,25 @@ public class ${table_name} implements Serializable {
 
     private static final long serialVersionUID = 8459650260047931206L;
 
-    @TableId
-    private Long id;
-
 <#if model_column??>
     <#list model_column as model>
     /**
     *${model.columnComment!}
     */
-    @TableField("${model.columnName}")
-<#if (model.columnType = 'varchar' || model.columnType = 'text')>
+<#if (model.primaryKey = true)>
+    @TableId("${model.columnName}")
     private String ${model.changeColumnName?uncap_first};
-
-</#if>
-<#if model.columnType = 'timestamp' >
-    private Date ${model.changeColumnName?uncap_first};
-</#if>
-<#if model.columnType = 'smallint' >
-    private Integer ${model.changeColumnName?uncap_first};
+<#else>
+    @TableField("${model.columnName}")
+    <#if (model.columnType = 'varchar' || model.columnType = 'text')>
+        private String ${model.changeColumnName?uncap_first};
+    </#if>
+    <#if model.columnType = 'timestamp' >
+        private Date ${model.changeColumnName?uncap_first};
+    </#if>
+    <#if model.columnType = 'smallint' >
+        private Integer ${model.changeColumnName?uncap_first};
+    </#if>
 </#if>
     </#list>
 </#if>

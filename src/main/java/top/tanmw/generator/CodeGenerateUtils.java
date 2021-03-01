@@ -48,6 +48,7 @@ public class CodeGenerateUtils {
 
     private final List<ColumnClass> columnClassList = new ArrayList<>();
     private String tableName;
+    private String primaryKeyColumnName;
     private String changeTableName;
 
     public static void main(String[] args) throws Exception {
@@ -80,6 +81,10 @@ public class CodeGenerateUtils {
                 columnClassList.clear();
                 DatabaseMetaData databaseMetaData = connection.getMetaData();
                 ResultSet resultSet = databaseMetaData.getColumns(null, "%", tableName, "%");
+                final ResultSet primaryKeys = databaseMetaData.getPrimaryKeys(null, null, tableName);
+                while (primaryKeys.next()) {
+                    primaryKeyColumnName = primaryKeys.getString("COLUMN_NAME");
+                }
                 //生成Mapper文件
                 generateMapperFile(resultSet);
                 //生成Dao文件
@@ -158,26 +163,28 @@ public class CodeGenerateUtils {
             ColumnClass columnClass = null;
             while (resultSet.next()) {
                 //id字段略过
-                if (StrUtil.equalsAny(templateName, "Model.ftl")) {
-                    if (StrUtil.equalsAny(resultSet.getString("COLUMN_NAME"), "id", "is_delete")) {
-                        continue;
-                    }
-                }
+                // if (StrUtil.equalsAny(templateName, "Model.ftl")) {
+                //     if (StrUtil.equalsAny(resultSet.getString("COLUMN_NAME"), "id", "is_delete")) {
+                //         continue;
+                //     }
+                // }
                 columnClass = new ColumnClass();
                 //获取字段名称
-                columnClass.setColumnName(resultSet.getString("COLUMN_NAME"));
+                final String columnName = resultSet.getString("COLUMN_NAME");
+                columnClass.setColumnName(columnName);
                 //获取字段类型
                 columnClass.setColumnType(resultSet.getString("TYPE_NAME").toLowerCase());
                 //转换字段名称，如 sys_name 变成 SysName
-                columnClass.setChangeColumnName(replaceUnderLineAndUpperCase(resultSet.getString("COLUMN_NAME")));
+                columnClass.setChangeColumnName(replaceUnderLineAndUpperCase(columnName));
                 //字段在数据库的注释
                 columnClass.setColumnComment(resultSet.getString("REMARKS"));
+                columnClass.setPrimaryKey(StrUtil.equals(columnName, primaryKeyColumnName));
                 columnClassList.add(columnClass);
             }
         }
         List<ColumnClass> relColumnClassList;
         if (StrUtil.equalsAny(templateName, "Model.ftl")) {
-            relColumnClassList = columnClassList.stream().filter(entity -> !StrUtil.equalsAny(entity.getColumnName(), "id", "is_delete"))
+            relColumnClassList = columnClassList.stream().filter(entity -> !StrUtil.equalsAny(entity.getColumnName(), "is_delete"))
                     .collect(Collectors.toList());
         } else {
             relColumnClassList = new ArrayList<>(columnClassList);
