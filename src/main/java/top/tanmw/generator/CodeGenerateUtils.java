@@ -105,6 +105,8 @@ public class CodeGenerateUtils {
                 generateVOFile(resultSet);
                 //生成Model文件
                 generateModelFile(resultSet);
+                // 生成Converter文件
+                generateConverterFile(resultSet);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -222,6 +224,17 @@ public class CodeGenerateUtils {
         this.checkFilePath(mapperFile);
         generateModelAndDTOAndVoFile(resultSet, templateName, mapperFile, dtoPath);
         System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "DTO.java 完成 >>>>>>>>>>>");
+    }
+
+    private void generateConverterFile(ResultSet resultSet) throws Exception {
+        final String suffix = "Converter.java";
+        String path = getCreatePath(converterPath, suffix);
+        final String templateName = "Converter.ftl";
+        File mapperFile = new File(path);
+        checkFilePath(mapperFile);
+        Map<String, Object> dataMap = new HashMap<>();
+        generateFileByTemplate(templateName, converterPath, mapperFile, dataMap);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "Converter.java 完成 >>>>>>>>>>>");
     }
 
     private void generateControllerFile(ResultSet resultSet) throws Exception {

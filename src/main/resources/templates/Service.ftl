@@ -15,12 +15,12 @@ public interface ${table_name}Service extends IService<${table_name}> {
     /***
     * 新增
     */
-    Long save(${table_name}DTO dto);
+    String save(${table_name}DTO dto);
 
     /**
     * 详情
     */
-    ${table_name}VO findById(Long id);
+    ${table_name}VO findById(String id);
 
     /**
     * 修改
@@ -30,7 +30,7 @@ public interface ${table_name}Service extends IService<${table_name}> {
     /**
     * 删除
     */
-    boolean delete(Long id);
+    boolean delete(String id);
 
     /**
     * 列表查询

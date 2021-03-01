@@ -1,7 +1,7 @@
 package ${package_name};
 
 import com.zenith.core.base.BaseDao;
-import com.zenith.front.domain.entity.Teacher;
+import ${entity_package_name}.${table_name};
 import org.apache.ibatis.annotations.Mapper;
 
 /**

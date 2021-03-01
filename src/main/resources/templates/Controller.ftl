@@ -2,7 +2,7 @@ package ${package_name};
 
 import com.zenith.common.domain.vo.PageVO;
 import com.zenith.core.result.R;
-import${api_package_name}.${table_name}Service;
+import ${api_package_name}.${table_name}Service;
 import ${dto_package_name}.${table_name}DTO;
 import ${dto_package_name}.${table_name}ListDTO;
 import ${vo_package_name}.${table_name}VO;
@@ -32,7 +32,7 @@ public class ${table_name}Controller {
      */
     @PostMapping("/save")
     public R save(@Validated @RequestBody ${table_name}DTO dto) {
-        Long id = ${lower_table_name}Service.save(dto);
+        String id = ${lower_table_name}Service.save(dto);
         return Objects.isNull(id) ? R.fail() : R.ok(id);
     }
 
@@ -40,7 +40,7 @@ public class ${table_name}Controller {
      * 详情
      */
     @PostMapping("/find/{id}")
-    public R find(@NotNull(message = "id 不能为空") @PathVariable Long id) {
+    public R find(@NotNull(message = "id 不能为空") @PathVariable String id) {
         ${table_name}VO vo = ${lower_table_name}Service.findById(id);
         return R.ok(vo);
     }
@@ -58,7 +58,7 @@ public class ${table_name}Controller {
      * 删除
      */
     @PostMapping("/delete/{id}")
-    public R delete(@NotNull(message = "id 不能为空") @PathVariable Long id) {
+    public R delete(@NotNull(message = "id 不能为空") @PathVariable String id) {
         boolean flag = ${lower_table_name}Service.delete(id);
         return flag ? R.ok() : R.fail();
     }

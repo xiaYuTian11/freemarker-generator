@@ -23,7 +23,7 @@ import java.util.Objects;
 */
 @Service
 @org.apache.dubbo.config.annotation.Service
-public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, ${table_name}> implements TeacherService {
+public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, ${table_name}> implements ${table_name}Service {
 
     @Resource
     private ${table_name}Converter ${lower_table_name}Converter;
@@ -31,14 +31,14 @@ public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, $
     private ${table_name}Mapper ${lower_table_name}Mapper;
 
     @Override
-    public Long save(${table_name}DTO dto) {
+    public String save(${table_name}DTO dto) {
         ${table_name} entity = ${lower_table_name}Converter.dto2Entity(dto);
         boolean save = this.save(entity);
         return save ? entity.getId() : null;
     }
 
     @Override
-    public ${table_name}VO findById(Long id) {
+    public ${table_name}VO findById(String id) {
         ${table_name} entity = this.getById(id);
         return Objects.isNull(entity) ? null : ${lower_table_name}Converter.entity2Vo(entity);
     }
@@ -49,7 +49,7 @@ public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, $
     }
 
     @Override
-    public boolean delete(Long id) {
+    public boolean delete(String id) {
         return this.removeById(id);
     }
 
