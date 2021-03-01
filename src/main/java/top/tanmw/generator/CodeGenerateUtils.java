@@ -1,7 +1,7 @@
 package top.tanmw.generator;
 
 import cn.hutool.core.date.DateUtil;
-import com.sun.xml.internal.ws.util.StringUtils;
+import cn.hutool.core.util.StrUtil;
 import freemarker.template.Template;
 
 import java.io.*;
@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.Date;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * https://www.jianshu.com/p/31e532392a74
@@ -18,17 +19,15 @@ import java.util.*;
  */
 public class CodeGenerateUtils {
 
-    private static final String URL = "jdbc:kingbase8://192.168.17.26:54321/FRONT?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8";
+    private static final String URL = "jdbc:kingbase8://127.0.0.1:54321/FRONT?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8";
     private static final String DRIVER = "com.kingbase8.Driver";
     private static final String USER = "SYSTEM";
     private static final String PASSWORD = "123456";
+    private final String showTablesSql = "select tablename from sys_tables WHERE \"schemaname\" = 'PUBLIC';";
 
-    private final String AUTHOR = "TMW";
-    private final String tableName = "demo_teacher";
-    private final String basePackageName = "com.zenith.front";
-    private final String packageName = "com.zenith.front.generator";
-    private final String tableAnnotation = "测试表";
     private final String basePath = "C:\\Users\\Administrator\\Desktop\\test";
+    private final String basePackageName = "com.zenith.front";
+    private final String AUTHOR = "TMW";
     private final String mapperXmlPath = "mapper";
     private final String daoPath = "dao";
     private final String dtoPath = "domain/dto";
@@ -36,11 +35,20 @@ public class CodeGenerateUtils {
     private final String entityPath = "domain/entity";
     private final String servicePath = "api";
     private final String serviceImplPath = "service";
+    private final String controllerPath = "controller";
     private final String converterPath = "converter";
+    private final String modelPath = "domain/entity";
+    // 优先
+    private final Set<String> includeSet = new HashSet<String>() {{
+        add("demo_teacher");
+    }};
+    private final Set<String> excludeSet = new HashSet<String>() {{
+        // add("String");
+    }};
 
-    // private final String changeTableName = replaceUnderLineAndUpperCase(tableName);
+    private final List<ColumnClass> columnClassList = new ArrayList<>();
+    private String tableName;
     private String changeTableName;
-    private final String showTablesSql = "select tablename from sys_tables WHERE \"schemaname\" = 'PUBLIC';";
 
     public static void main(String[] args) throws Exception {
         CodeGenerateUtils codeGenerateUtils = new CodeGenerateUtils();
@@ -56,9 +64,20 @@ public class CodeGenerateUtils {
         Connection connection = null;
         try {
             connection = getConnection();
-            final Set<String> tables = findTables(connection);
-            for (String tableName : tables) {
+            Set<String> tables = findTables(connection);
+            if (includeSet.size() > 0) {
+                tables = tables.stream().filter(includeSet::contains).collect(Collectors.toSet());
+            }
+            if (excludeSet.size() > 0) {
+                tables = tables.stream().filter(tableNameStr -> !excludeSet.contains(tableNameStr)).collect(Collectors.toSet());
+            }
+            if (tables.size() < 1) {
+                throw new RuntimeException("未发现可生成表");
+            }
+            for (String tableNameStr : tables) {
+                tableName = tableNameStr;
                 changeTableName = replaceUnderLineAndUpperCase(tableName);
+                columnClassList.clear();
                 DatabaseMetaData databaseMetaData = connection.getMetaData();
                 ResultSet resultSet = databaseMetaData.getColumns(null, "%", tableName, "%");
                 //生成Mapper文件
@@ -71,12 +90,16 @@ public class CodeGenerateUtils {
                 generateServiceInterfaceFile(resultSet);
                 //生成服务实现层文件
                 generateServiceImplFile(resultSet);
-                // //生成Controller层文件
-                // generateControllerFile(resultSet);
-                // //生成DTO文件
-                // generateDTOFile(resultSet);
-                // //生成Model文件
-                // generateModelFile(resultSet);
+                //生成Controller层文件
+                generateControllerFile(resultSet);
+                //生成DTO文件
+                generateDTOFile(resultSet);
+                //生成ListDTO文件
+                generateListDTOFile(resultSet);
+                //生成VO文件
+                generateVOFile(resultSet);
+                //生成Model文件
+                generateModelFile(resultSet);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -122,50 +145,87 @@ public class CodeGenerateUtils {
 
     private void generateModelFile(ResultSet resultSet) throws Exception {
         final String suffix = ".java";
-        // final String path = basePath + File.separator + mapperXmlPath + File.separator + changeTableName + suffix;
-        String path = getCreatePath(mapperXmlPath, suffix);
+        String path = getCreatePath(modelPath, suffix);
         final String templateName = "Model.ftl";
         File mapperFile = new File(path);
-        List<ColumnClass> columnClassList = new ArrayList<>();
-        ColumnClass columnClass = null;
-        while (resultSet.next()) {
-            //id字段略过
-            if (resultSet.getString("COLUMN_NAME").equals("id")) {
-                continue;
+        this.checkFilePath(mapperFile);
+        generateModelAndDTOAndVoFile(resultSet, templateName, mapperFile, modelPath);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + ".java 完成 >>>>>>>>>>>");
+    }
+
+    private void generateModelAndDTOAndVoFile(ResultSet resultSet, String templateName, File createFile, String packageName) throws Exception {
+        if (columnClassList.size() < 1) {
+            ColumnClass columnClass = null;
+            while (resultSet.next()) {
+                //id字段略过
+                if (StrUtil.equalsAny(templateName, "Model.ftl")) {
+                    if (StrUtil.equalsAny(resultSet.getString("COLUMN_NAME"), "id", "is_delete")) {
+                        continue;
+                    }
+                }
+                columnClass = new ColumnClass();
+                //获取字段名称
+                columnClass.setColumnName(resultSet.getString("COLUMN_NAME"));
+                //获取字段类型
+                columnClass.setColumnType(resultSet.getString("TYPE_NAME").toLowerCase());
+                //转换字段名称，如 sys_name 变成 SysName
+                columnClass.setChangeColumnName(replaceUnderLineAndUpperCase(resultSet.getString("COLUMN_NAME")));
+                //字段在数据库的注释
+                columnClass.setColumnComment(resultSet.getString("REMARKS"));
+                columnClassList.add(columnClass);
             }
-            columnClass = new ColumnClass();
-            //获取字段名称
-            columnClass.setColumnName(resultSet.getString("COLUMN_NAME"));
-            //获取字段类型
-            columnClass.setColumnType(resultSet.getString("TYPE_NAME"));
-            //转换字段名称，如 sys_name 变成 SysName
-            columnClass.setChangeColumnName(replaceUnderLineAndUpperCase(resultSet.getString("COLUMN_NAME")));
-            //字段在数据库的注释
-            columnClass.setColumnComment(resultSet.getString("REMARKS"));
-            columnClassList.add(columnClass);
+        }
+        List<ColumnClass> relColumnClassList;
+        if (StrUtil.equalsAny(templateName, "Model.ftl")) {
+            relColumnClassList = columnClassList.stream().filter(entity -> !StrUtil.equalsAny(entity.getColumnName(), "id", "is_delete"))
+                    .collect(Collectors.toList());
+        } else {
+            relColumnClassList = new ArrayList<>(columnClassList);
         }
         Map<String, Object> dataMap = new HashMap<>();
-        dataMap.put("model_column", columnClassList);
-        generateFileByTemplate(templateName, mapperFile, dataMap);
+        dataMap.put("model_column", relColumnClassList);
+        generateFileByTemplate(templateName, packageName, createFile, dataMap);
+    }
 
+    private void generateListDTOFile(ResultSet resultSet) throws Exception {
+        final String suffix = "ListDTO.java";
+        String path = getCreatePath(dtoPath, suffix);
+        final String templateName = "ListDTO.ftl";
+        File mapperFile = new File(path);
+        this.checkFilePath(mapperFile);
+        generateModelAndDTOAndVoFile(resultSet, templateName, mapperFile, dtoPath);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "ListDTO.java 完成 >>>>>>>>>>>");
+    }
+
+    private void generateVOFile(ResultSet resultSet) throws Exception {
+        final String suffix = "VO.java";
+        String path = getCreatePath(voPath, suffix);
+        final String templateName = "VO.ftl";
+        File mapperFile = new File(path);
+        this.checkFilePath(mapperFile);
+        generateModelAndDTOAndVoFile(resultSet, templateName, mapperFile, voPath);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "VO.java 完成 >>>>>>>>>>>");
     }
 
     private void generateDTOFile(ResultSet resultSet) throws Exception {
         final String suffix = "DTO.java";
-        final String path = "D://" + changeTableName + suffix;
+        String path = getCreatePath(dtoPath, suffix);
         final String templateName = "DTO.ftl";
         File mapperFile = new File(path);
-        Map<String, Object> dataMap = new HashMap<>();
-        generateFileByTemplate(templateName, mapperFile, dataMap);
+        this.checkFilePath(mapperFile);
+        generateModelAndDTOAndVoFile(resultSet, templateName, mapperFile, dtoPath);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "DTO.java 完成 >>>>>>>>>>>");
     }
 
     private void generateControllerFile(ResultSet resultSet) throws Exception {
         final String suffix = "Controller.java";
-        final String path = basePath + changeTableName + suffix;
+        String path = getCreatePath(controllerPath, suffix);
         final String templateName = "Controller.ftl";
         File mapperFile = new File(path);
+        checkFilePath(mapperFile);
         Map<String, Object> dataMap = new HashMap<>();
-        generateFileByTemplate(templateName, mapperFile, dataMap);
+        generateFileByTemplate(templateName, controllerPath, mapperFile, dataMap);
+        System.out.println("<<<<<<<<<<<< 生成 " + changeTableName + "Controller.java 完成 >>>>>>>>>>>");
     }
 
     private void generateServiceImplFile(ResultSet resultSet) throws Exception {
@@ -235,6 +295,7 @@ public class CodeGenerateUtils {
         FileOutputStream fos = new FileOutputStream(file);
         dataMap.put("table_name_small", tableName);
         dataMap.put("table_name", changeTableName);
+        dataMap.put("lower_table_name", StrUtil.lowerFirst(changeTableName));
         dataMap.put("author", AUTHOR);
         dataMap.put("date", DateUtil.formatDateTime(new Date()));
         dataMap.put("dto_package_name", getSuffixPackageName(dtoPath));
@@ -245,7 +306,7 @@ public class CodeGenerateUtils {
         dataMap.put("service_package_name", getSuffixPackageName(serviceImplPath));
         dataMap.put("converter_package_name", getSuffixPackageName(converterPath));
         dataMap.put("dao_package_name", getSuffixPackageName(daoPath));
-        dataMap.put("table_annotation", tableAnnotation);
+        // dataMap.put("table_annotation", tableAnnotation);
         Writer out = new BufferedWriter(new OutputStreamWriter(fos, StandardCharsets.UTF_8), 10240);
         template.process(dataMap, out);
     }
@@ -257,19 +318,6 @@ public class CodeGenerateUtils {
     }
 
     public String replaceUnderLineAndUpperCase(String str) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(str);
-        int count = sb.indexOf("_");
-        while (count != 0) {
-            int num = sb.indexOf("_", count);
-            count = num + 1;
-            if (num != -1) {
-                char ss = sb.charAt(count);
-                char ia = (char) (ss - 32);
-                sb.replace(count, count + 1, ia + "");
-            }
-        }
-        String result = sb.toString().replaceAll("_", "");
-        return StringUtils.capitalize(result);
+        return StrUtil.upperFirst(StrUtil.toCamelCase(str));
     }
 }

@@ -26,13 +26,13 @@ import java.util.Objects;
 public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, ${table_name}> implements TeacherService {
 
     @Resource
-    private ${table_name}Converter converter;
+    private ${table_name}Converter ${lower_table_name}Converter;
     @Resource
-    private ${table_name}Mapper mapper;
+    private ${table_name}Mapper ${lower_table_name}Mapper;
 
     @Override
     public Long save(${table_name}DTO dto) {
-        ${table_name} entity = converter.dto2Entity(dto);
+        ${table_name} entity = ${lower_table_name}Converter.dto2Entity(dto);
         boolean save = this.save(entity);
         return save ? entity.getId() : null;
     }
@@ -40,12 +40,12 @@ public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, $
     @Override
     public ${table_name}VO findById(Long id) {
         ${table_name} entity = this.getById(id);
-        return Objects.isNull(entity) ? null : converter.entity2Vo(entity);
+        return Objects.isNull(entity) ? null : ${lower_table_name}Converter.entity2Vo(entity);
     }
 
     @Override
     public boolean update(${table_name}DTO dto) {
-        return this.updateById(converter.dto2Entity(dto));
+        return this.updateById(${lower_table_name}Converter.dto2Entity(dto));
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ${table_name}ServiceImpl extends ServiceImpl<${table_name}Mapper, $
 
     @Override
     public PageVO<?> list(${table_name}ListDTO dto) {
-    final Page<${table_name}> page = mapper.selectPage(new Page<>(dto.getCurrPage(), dto.getPageSize()), new QueryWrapper<>());
+    final Page<${table_name}> page = ${lower_table_name}Mapper.selectPage(new Page<>(dto.getCurrPage(), dto.getPageSize()), new QueryWrapper<>());
         return PageVOExt.toVo(page);
     }
 }
