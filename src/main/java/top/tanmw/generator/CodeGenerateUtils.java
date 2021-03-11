@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class CodeGenerateUtils {
 
-    private static final String URL = "jdbc:kingbase8://192.168.0.246:54321/FRONT?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8";
+    private static final String URL = "jdbc:kingbase8://127.0.0.1:54321/FRONT?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8";
     private static final String DRIVER = "com.kingbase8.Driver";
     private static final String USER = "SYSTEM";
     private static final String PASSWORD = "123456";
