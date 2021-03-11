@@ -14,12 +14,12 @@ import org.mapstruct.factory.Mappers;
 @Mapper(componentModel = "spring")
 public interface ${table_name}Converter {
 
-${table_name}Converter INSTANCE = Mappers.getMapper(${table_name}Converter.class);
+    ${table_name}Converter INSTANCE = Mappers.getMapper(${table_name}Converter.class);
 
-@Mappings({})
-${table_name} dto2Entity(${table_name}DTO dto);
+    @Mappings({})
+    ${table_name} dto2Entity(${table_name}DTO dto);
 
-@Mappings({})
-${table_name}VO entity2Vo(${table_name} entity);
+    @Mappings({})
+    ${table_name}VO entity2Vo(${table_name} entity);
 
 }

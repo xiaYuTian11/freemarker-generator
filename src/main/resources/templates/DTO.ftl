@@ -12,7 +12,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ${table_name}DTO extends BaseDTO {
-    private static final long serialVersionUID = 4570863226585293833L;
+    private static final long serialVersionUID = ${serialVersionUID};
 
 <#if model_column??>
 <#list model_column as model>

@@ -12,20 +12,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 代码生成器
+ * 代码生成器启动类，Generate.java暂时未作使用
  *
  * @author TMW
  * @date 2021/2/25 17:45
  */
 public class CodeGenerateUtils {
 
-    private static final String URL = "jdbc:kingbase8://127.0.0.1:54321/FRONT?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8";
+    private static final String URL = "jdbc:kingbase8://192.168.0.246:54321/FRONT?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8";
     private static final String DRIVER = "com.kingbase8.Driver";
     private static final String USER = "SYSTEM";
     private static final String PASSWORD = "123456";
     private final String showTablesSql = "select tablename from sys_tables WHERE \"schemaname\" = 'PUBLIC';";
 
-    private final String basePath = "C:\\Users\\Administrator\\Desktop\\test";
+    private final String basePath = "C:\\Users\\tmw\\Desktop\\test";
     private final String basePackageName = "com.zenith.front";
     private final String AUTHOR = "TMW";
     private final String mapperXmlPath = "mapper";
@@ -40,7 +40,9 @@ public class CodeGenerateUtils {
     private final String modelPath = "domain/entity";
     // 优先
     private final Set<String> includeSet = new HashSet<String>() {{
-        add("demo_teacher");
+        add("t_dct_info_group");
+        add("t_dct_info_item");
+        add("t_dct_info_set");
     }};
     private final Set<String> excludeSet = new HashSet<String>() {{
         // add("String");
@@ -66,8 +68,9 @@ public class CodeGenerateUtils {
         try {
             connection = getConnection();
             Set<String> tables = findTables(connection);
-            if (includeSet.size() > 0) {
-                tables = tables.stream().filter(includeSet::contains).collect(Collectors.toSet());
+            final Set<String> lowerCaseSet = includeSet.stream().map(String::toLowerCase).collect(Collectors.toSet());
+            if (lowerCaseSet.size() > 0) {
+                tables = tables.stream().filter(lowerCaseSet::contains).collect(Collectors.toSet());
             }
             if (excludeSet.size() > 0) {
                 tables = tables.stream().filter(tableNameStr -> !excludeSet.contains(tableNameStr)).collect(Collectors.toSet());
@@ -313,6 +316,7 @@ public class CodeGenerateUtils {
     private void generateFileByTemplate(final String templateName, String packagePath, File file, Map<String, Object> dataMap) throws Exception {
         Template template = FreeMarkerTemplateUtils.getTemplate(templateName);
         FileOutputStream fos = new FileOutputStream(file);
+        dataMap.put("serialVersionUID", getSerialVersionUID());
         dataMap.put("table_name_small", tableName);
         dataMap.put("table_name", changeTableName);
         dataMap.put("lower_table_name", StrUtil.lowerFirst(changeTableName));
@@ -335,6 +339,13 @@ public class CodeGenerateUtils {
         if (!file.exists()) {
             file.getParentFile().mkdirs();
         }
+    }
+
+    /**
+     * 生成serialVersionUID
+     */
+    protected String getSerialVersionUID() {
+        return String.valueOf(Math.abs(UUID.randomUUID().getMostSignificantBits())) + "L";
     }
 
     public String replaceUnderLineAndUpperCase(String str) {

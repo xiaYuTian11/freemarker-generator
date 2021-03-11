@@ -14,7 +14,7 @@ import java.util.Date;
 @TableName("${table_name_small}")
 public class ${table_name} implements Serializable {
 
-    private static final long serialVersionUID = 8459650260047931206L;
+    private static final long serialVersionUID = ${serialVersionUID};
 
 <#if model_column??>
     <#list model_column as model>
@@ -27,19 +27,19 @@ public class ${table_name} implements Serializable {
 <#else>
     @TableField("${model.columnName}")
     <#if (model.columnType = 'varchar' || model.columnType = 'text')>
-        private String ${model.changeColumnName?uncap_first};
+    private String ${model.changeColumnName?uncap_first};
     </#if>
     <#if model.columnType = 'timestamp' >
-        private Date ${model.changeColumnName?uncap_first};
+    private Date ${model.changeColumnName?uncap_first};
     </#if>
-    <#if model.columnType = 'smallint' >
-        private Integer ${model.changeColumnName?uncap_first};
+    <#if model.columnType = 'smallint' || model.columnType = 'int2'>
+    private Integer ${model.changeColumnName?uncap_first};
     </#if>
 </#if>
     </#list>
 </#if>
 
-
+    @TableLogic
     @TableField(value = "is_delete", fill = FieldFill.INSERT)
     private Integer isDelete;
 }

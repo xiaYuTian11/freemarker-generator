@@ -13,7 +13,7 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 public class ${table_name}VO extends BaseVO {
 
-    private static final long serialVersionUID = -3842211355647092752L;
+    private static final long serialVersionUID = ${serialVersionUID};
 
 <#if model_column??>
 <#list model_column as model>
